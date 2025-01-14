@@ -1,25 +1,27 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -I./include -I./src/engine -I./src/engine/input -I./src/engine/rendering -I./src/engine/window
+CFLAGS = -Wall -Wextra -I./include
 LDFLAGS = -lgdi32 -lopengl32
 
 SRC_DIR = src
 ENGINE_DIR = $(SRC_DIR)/engine
-BEHAVIOR_DIR = $(ENGINE_DIR)/behavior
-INPUT_DIR = $(ENGINE_DIR)/input
-RENDERING_DIR = $(ENGINE_DIR)/rendering
-WINDOW_DIR = $(ENGINE_DIR)/window
+GRAPHICS_DIR = $(SRC_DIR)/graphics
+INPUT_DIR = $(SRC_DIR)/input
+MATH_DIR = $(SRC_DIR)/gmath
+PLATFORM_DIR = $(SRC_DIR)/platform
 BUILD_DIR = build
 
-SRC = src/main.c \
-      $(ENGINE_DIR)/engine.c \
-      $(INPUT_DIR)/keyboard.c \
-      $(INPUT_DIR)/mouse.c \
-      $(RENDERING_DIR)/renderer.c \
-	  $(RENDERING_DIR)/sprite.c \
-	  $(BEHAVIOR_DIR)/behavior.c \
-      $(WINDOW_DIR)/window.c
+SRC = \
+    $(SRC_DIR)/game.c \
+    $(ENGINE_DIR)/engine.c \
+    $(GRAPHICS_DIR)/animation.c \
+	$(GRAPHICS_DIR)/camera.c \
+    $(GRAPHICS_DIR)/renderer.c \
+    $(GRAPHICS_DIR)/sprite.c \
+    $(INPUT_DIR)/input.c \
+    $(MATH_DIR)/gmath.c \
+    $(PLATFORM_DIR)/win32_window.c
 
-OBJ = $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(SRC))
+OBJ = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SRC))
 
 TARGET = main.exe
 

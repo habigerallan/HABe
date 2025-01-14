@@ -1,25 +1,50 @@
 #ifndef SPRITE_H
 #define SPRITE_H
 
-#include <stdbool.h>
+typedef enum {
+    SPRITE_BEHAVIOR_NONE,
+    SPRITE_BEHAVIOR_PLAYER_INPUT,
+    SPRITE_BEHAVIOR_AI
+} SpriteBehaviorType;
+
+typedef struct Sprite Sprite;
+
+typedef void (*SpriteUpdateFunc)(Sprite* sprite, float deltaTime);
 
 typedef struct {
-    unsigned int textureID;
-    float width;
-    float height;
+    SpriteBehaviorType type;
+    SpriteUpdateFunc func;
+} SpriteBehavior;
+
+// bottom left
+struct Sprite {
     float x;
     float y;
     float z;
+    float width;
+    float height;
     float rotation;
-    float color[4];
-} Sprite;
+    unsigned int textureID;
+    SpriteBehavior behavior;
+};
 
-bool InitSprite(Sprite* sprite, const char* filepath, float width, float height, float rotation);
-void DestroySprite(Sprite* sprite);
+Sprite create_sprite(
+    float x,
+    float y,
+    float z,
+    float width,
+    float height,
+    float rotation,
+    const char* textureFile
+);
 
-void SetSpritePosition(Sprite* sprite, float x, float y, float z);
-void SetSpriteRotation(Sprite* sprite, float rotation);
-void SetSpriteColor(Sprite* sprite, float r, float g, float b, float a);
-void RenderSprite(const Sprite* sprite);
+void destroy_sprite(Sprite* s);
+void set_sprite_position(Sprite* s, float x, float y, float z);
+void set_sprite_rotation(Sprite* s, float rotation);
+void set_sprite_size(Sprite* s, float width, float height);
+void set_sprite_texture(Sprite* s, const char* textureFile);
+void set_sprite_behavior(Sprite* s, SpriteBehaviorType type, SpriteUpdateFunc func);
+void draw_sprite_instance(const Sprite* s);
+void update_sprite(Sprite* s, float deltaTime);
 
-#endif // SPRITE_H
+#endif

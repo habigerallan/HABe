@@ -1,156 +1,160 @@
-#include "engine.h"
-#include "window.h"
-#include "renderer.h"
-#include "keyboard.h"
-#include "behavior.h"
-#include "mouse.h"
-#include <stdio.h>
-#include <stdlib.h>
 #include <windows.h>
+#include <GL/gl.h>
+#include <string.h>
+#include <stdio.h>
+#include "engine.h"
+#include "sprite.h"
+#include "renderer.h"
+#include "camera.h"
 
-Environment* env = NULL;
-static HDC hDC = NULL;
+static double get_time_seconds(void) {
+    static LARGE_INTEGER frequency;
+    static int initialized = 0;
+    if (!initialized) {
+        QueryPerformanceFrequency(&frequency);
+        initialized = 1;
+    }
+    LARGE_INTEGER counter;
+    QueryPerformanceCounter(&counter);
+    return (double)counter.QuadPart / (double)frequency.QuadPart;
+}
 
-int InitEngine(const char* title, int width, int height, HINSTANCE hInstance) {
-    if (!InitEngineWindow(title, width, height, hInstance)) {
-        printf("Failed to create the window.\n");
+int engine_init(Engine* engine, int width, int height, const char* title) {
+    if (!engine) return 0;
+
+    engine->spriteCount = 0;
+
+    if (!init_win32_window(&engine->window, width, height, title)) {
         return 0;
     }
+    init_renderer(width, height);
+    init_input_state(&engine->input);
+    engine->running = 1;
 
-    hDC = GetDC(GetEngineWindowHandle());
-    if (!hDC) {
-        printf("Failed to get device context.\n");
-        return 0;
-    }
+    camera_init(&engine->camera, 0.0f, 0.0f, 1.0f);
 
-    if (!InitRenderer(GetEngineWindowHandle())) {
-        printf("Failed to initialize the renderer.\n");
-        return 0;
-    }
-
-    InitKeyboard();
-    InitMouse();
-
-    env = (Environment*)malloc(sizeof(Environment));
-    if (!env) {
-        printf("Failed to allocate memory for the environment.\n");
-        return 0;
-    }
-
-    env->sprites = NULL;
-    env->spritesLength = 0;
-    env->updateFunctions = NULL;
-    env->mainTiles = NULL;
-    env->gridwidth = 0;
-    env->gridLength = 0;
-
-    env->spritesLength = 3;
-    env->sprites = (Sprite*)malloc(sizeof(Sprite) * env->spritesLength);
-    if (!env->sprites) {
-        printf("Failed to allocate memory for sprites.\n");
-        free(env);
-        return 0;
-    }
-
-    env->updateFunctions = (UpdateFunction*)calloc(env->spritesLength, sizeof(UpdateFunction));
-    if (!env->updateFunctions) {
-        printf("Failed to allocate memory for update functions.\n");
-        free(env->sprites);
-        free(env);
-        return 0;
-    }
-
-    InitSprite(&env->sprites[2], "", 100.0f, 100.0f, 30.0f);
-    SetSpriteColor(&env->sprites[2], 1, 0, 0, 1);
-    SetSpritePosition(&env->sprites[2], 500, 20, -1);
-
-    InitSprite(&env->sprites[0], "", 100.0f, 100.0f, 0.0f);
-    SetSpriteColor(&env->sprites[0], 1, 1, 0, 1);
-    SetSpritePosition(&env->sprites[0], 300, 300, 1);
-
-    InitSprite(&env->sprites[1], "C:\\Users\\habig\\Documents\\GitHub\\HABe\\assets\\test.png", 100.0f, 100.0f, 0.0f);
-
-    env->updateFunctions[1] = MoveSpriteWithWASD;
+    engine->width = width;
+    engine->height = height;
 
     return 1;
 }
 
-void ProcessInput() {
-    UpdateKeyboard();
-    UpdateMouse();
+int engine_add_sprite(Engine* engine, const Sprite* sprite) {
+    if (!engine || !sprite) return -1;
+    if (engine->spriteCount >= MAX_SPRITES) return -1;
+    engine->sprites[engine->spriteCount] = *sprite;
+    return engine->spriteCount++;
 }
 
-void UpdateEnvironment() {
-    if (!env || !env->sprites) return;
+int engine_remove_sprite(Engine* engine, int index) {
+    if (!engine) return 0;
+    if (index < 0 || index >= engine->spriteCount) return 0;
 
-    for (int i = 0; i < env->spritesLength; ++i) {
-        if (env->updateFunctions && env->updateFunctions[i]) {
-            env->updateFunctions[i](&env->sprites[i], env->sprites, env->spritesLength);
+    destroy_sprite(&engine->sprites[index]);
+
+    for (int i = index; i < engine->spriteCount - 1; i++) {
+        engine->sprites[i] = engine->sprites[i + 1];
+    }
+
+    engine->spriteCount--;
+    return 1;
+}
+
+int engine_run(Engine* engine) {
+    if (!engine) return 0;
+
+    double lastTime = get_time_seconds();
+
+    while (engine->running) {
+        if (!process_win32_messages(&engine->window)) {
+            engine->running = 0;
+            break;
         }
+
+        update_input_state(&engine->input);
+
+        double currentTime = get_time_seconds();
+        float deltaTime = (float)(currentTime - lastTime);
+        lastTime = currentTime;
+
+        engine_update(engine, deltaTime);
+        engine_render(engine);
+    }
+
+    return 1;
+}
+
+void engine_update(Engine* engine, float deltaTime) {
+    if (!engine) return;
+
+    float speed = 200.0f * deltaTime;
+    if (is_key_down(&engine->input, 'W')) engine->camera.y += speed;
+    if (is_key_down(&engine->input, 'D')) engine->camera.x += speed;
+    if (is_key_down(&engine->input, 'S')) engine->camera.y -= speed;
+    if (is_key_down(&engine->input, 'A')) engine->camera.x -= speed;
+    
+    if (is_key_down(&engine->input, 'Q')) camera_set_zoom(&engine->camera, engine->camera.zoom + 0.5f * deltaTime);
+    if (is_key_down(&engine->input, 'E')) camera_set_zoom(&engine->camera, engine->camera.zoom - 0.5f * deltaTime);
+
+    for (int i = 0; i < engine->spriteCount; i++) {
+        update_sprite(&engine->sprites[i], deltaTime);
     }
 }
 
-void RenderEnvironment() {
-    if (!env || !env->sprites) return;
+void engine_render(Engine* engine) {
+    if (!engine) return;
 
-    for (int i = 0; i < env->spritesLength; ++i) {
-        RenderSprite(&env->sprites[i]);
+    begin_frame();
+
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    camera_apply(&engine->camera, (float)engine->width, (float)engine->height);
+
+    for (int i = 0; i < engine->spriteCount; i++) {
+        draw_sprite_instance(&engine->sprites[i]);
     }
+
+    end_frame();
 }
 
-void StartEngineLoop() {
-    while (!ShouldEngineWindowClosed()) {
-        ProcessEngineWindowEvents();
-        ProcessInput();
-
-        UpdateEnvironment();
-
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        RenderEnvironment();
-
-        SwapBuffers(hDC);
-    }
-
-    DestroyEngine();
+void engine_set_camera_pos(Engine* engine, float x, float y) {
+    if (!engine) return;
+    camera_set_position(&engine->camera, x, y);
 }
 
-void DestroyEngine() {
-    if (env) {
-        if (env->sprites) {
-            for (int i = 0; i < env->spritesLength; ++i) {
-                DestroySprite(&env->sprites[i]);
-            }
-            free(env->sprites);
-        }
+void engine_set_camera_zoom(Engine* engine, float zoom) {
+    if (!engine) return;
+    camera_set_zoom(&engine->camera, zoom);
+}
 
-        if (env->updateFunctions) {
-            free(env->updateFunctions);
-        }
+void engine_move_camera(Engine* engine, float dx, float dy) {
+    if (!engine) return;
+    camera_set_position(&engine->camera, engine->camera.x + dx, engine->camera.y + dy);
+}
 
-        if (env->mainTiles) {
-            for (int i = 0; i < env->gridLength; ++i) {
-                for (int j = 0; j < 4; ++j) {
-                    if (env->mainTiles[i].neighbors[j]) {
-                        DestroySprite(&env->mainTiles[i].neighbors[j]->sprite);
-                        free(env->mainTiles[i].neighbors[j]);
-                    }
-                }
-                DestroySprite(&env->mainTiles[i].sprite);
-            }
-            free(env->mainTiles);
-        }
+void engine_zoom_camera(Engine* engine, float dZoom) {
+    if (!engine) return;
+    camera_set_zoom(&engine->camera, engine->camera.zoom + dZoom);
+}
 
-        free(env);
-        env = NULL;
-    }
+const InputState* engine_get_input_state(const Engine* engine) {
+    if (!engine) return NULL;
+    return &engine->input;
+}
 
-    DestroyRenderer();
+Sprite* engine_get_sprite(Engine* engine, int index) {
+    if (!engine) return NULL;
+    if (index < 0 || index >= engine->spriteCount) return NULL;
+    return &engine->sprites[index];
+}
 
-    if (hDC) {
-        ReleaseDC(GetEngineWindowHandle(), hDC);
-        hDC = NULL;
-    }
+int engine_get_sprite_count(const Engine* engine) {
+    if (!engine) return 0;
+    return engine->spriteCount;
+}
 
-    DestroyEngineWindow();
+void engine_shutdown(Engine* engine) {
+    if (!engine) return;
+    destroy_win32_window(&engine->window);
 }

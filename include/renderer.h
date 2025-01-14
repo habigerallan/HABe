@@ -1,17 +1,24 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
-#include <windows.h>
-#include <gl/gl.h>
+#include "sprite.h"
 
-#define STB_IMAGE_IMPLEMENTATION
+void init_renderer(int width, int height);
 
-int InitRenderer(HWND hwnd);
-void DestroyRenderer();
+void begin_frame(void);
+void end_frame(void);
 
-unsigned int LoadTexture(const char* filepath);
-void DestroyTexture(unsigned int textureID);
+unsigned int load_texture(const char* filepath);
+void free_texture(unsigned int textureID);
 
-void Render(float x, float y, float z, float width, float height, float rotation, const float color[4], unsigned int textureID);
+void draw_sprite(
+    float x,
+    float y,
+    float z,
+    float width,
+    float height,
+    float rotationRadians,
+    unsigned int textureID
+);
 
-#endif // RENDERER_H
+#endif
