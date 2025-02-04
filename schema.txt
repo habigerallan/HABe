@@ -1,0 +1,360 @@
+HABe
+    gmath
+    input
+    renderer
+        window
+        scene
+            camera
+            sprite
+                animation
+
+            background
+                tile_grid
+                    tile
+                        tile_neighbors
+                            tile_neighbor
+                                tile_type
+
+                        can_collide
+                        texture
+
+
+
+HABe:
+    gmath
+    input
+    renderer
+
+
+    functions:
+        HABe_init
+        HABe_clear
+        HABe_destroy
+
+
+        HABe_start
+        HABe_stop
+
+        
+        HABe_get_renderer
+        HABe_get_input
+        HABe_set_renderer
+        HABe_set_input
+
+        
+        HABe_add_camera
+        HABe_move_camera
+        HABe_rotate_camera
+        HABe_zoom_camera
+
+        
+        HABe_add_sprite
+        HABe_move_sprite
+        HABe_rotate_sprite
+        HABe_play_sprite_animation
+
+        
+        HABe_add_background
+        HABe_change_background_tile
+        HABe_set_background_tile
+        HABe_remove_background_tile
+
+        
+        HABe_create_animation
+        HABe_get_animation
+        HABe_update_animation
+        HABe_destroy_animation
+
+
+        HABe_create_tile
+        HABe_destroy_tile
+        HABe_create_tile_type
+        HABe_destroy_tile_type
+
+
+input:
+    key_states
+    mouse_states
+    mouse_position
+    mouse_scroll_wheel_delta
+
+
+    functions:
+        input_init
+
+
+        input_update
+        
+
+        input_get_key_states
+        input_get_key_state
+        input_get_key_press
+        input_get_key_down
+        input_get_key_up
+
+
+        input_get_mouse_states
+        input_get_mouse_state
+        input_get_mouse_press
+        input_get_mouse_down
+        input_get_mouse_up
+
+
+        input_get_mouse_position
+        input_get_mouse_scrool_wheel_delta
+
+
+window:
+    h_instance
+    h_wnd
+    h_dc
+    h_gl_rc
+    size
+    title
+
+
+    functions:
+        window_init
+        window_clear
+        window_destroy
+
+
+        window_process_message
+        window_get_mouse_wheel_delta
+
+
+        window_get_h_instance
+        window_get_h_wnd
+        window_get_h_dc
+        window_get_h_gl_rc
+        window_get_size
+        window_get_title
+        
+
+        window_set_h_instance
+        window_set_h_wnd
+        window_set_h_dc
+        window_set_h_gl_rc
+        window_set_size
+        window_set_title
+
+
+renderer:
+    scene
+    window
+
+
+    functions:
+        renderer_init
+
+
+        renderer_draw
+
+
+        renderer_get_scene
+        renderer_get_window
+
+        
+        renderer_set_scene
+        renderer_set_window
+
+
+scene:
+    camera
+    sprites
+    background
+
+
+    functions:
+        scene_init
+        scene_clear
+        scene_destroy
+
+
+        scene_get_camera
+        scene_get_sprites
+        scene_get_sprite
+        scene_get_background
+
+        
+        scene_set_camera
+        scene_set_sprites
+        scene_set_sprite
+        scene_set_background
+
+
+camera:
+    position
+    rotation
+    zoom
+
+
+    functions:
+        camera_init
+
+
+        camera_move
+        camera_rotate
+        camera_zoom
+
+
+        camera_get_position
+        camera_get_rotation
+        camera_get_zoom
+        
+
+        camera_set_position
+        camera_set_rotation
+        camera_set_zoom
+
+
+background:
+    tile_grid
+
+
+    functions:
+        background_init
+
+
+        background_get_tile_grid
+
+
+        background_set_tile_grid
+
+
+tile_grid:
+    tiles
+
+
+    functions:
+        tile_grid_init
+
+
+        tile_grid_get_tiles
+        tile_grid_get_tile
+
+
+        tile_grid_set_tiles
+        tile_grid_get_tile
+
+
+tile:
+    id
+    tile_neighbors
+    can_collide
+    texture_id
+
+
+    functions:
+        tile_init
+        tile_clear
+        tile_destroy
+
+
+        tile_get_id
+        tile_get_tile_neighbors
+        tile_get_tile_neighbor
+        tile_get_can_collide
+        tile_get_texture_id
+
+
+        tile_set_id
+        tile_set_tile_neighbors
+        tile_set_tile_neighbor
+        tile_set_can_collide
+        tile_set_texture_id
+
+      
+tile_neighbor:
+    id
+    tile_type
+
+
+    functions:
+        tile_neighbor_init
+
+
+        tile_neighbor_get_id
+        tile_neighbor_get_tile_type
+
+
+        tile_neighbor_set_id
+        tile_neighbor_set_tile_type
+
+
+tile_type:
+    id
+
+
+    functions:
+        tile_type_init
+
+
+        tile_type_get_id
+        tile_type_set_id
+
+
+sprite:
+    id (unsigned int)
+    texture_id (unsigned ints)
+    animation_ids (unsigned ints)
+    animation_id (unsigned int)
+    position (vector_2d)
+    rotation (vector_2d)
+    z_index (unsigned int)
+    current_animation_index (unsigned int)
+
+
+    functions:
+        sprite_init
+        sprite_clear
+        sprite_destroy
+
+
+        sprite_move
+        sprite_rotate
+        sprite_play_animation
+
+
+        sprite_get_id
+        sprite_get_texture_id
+        sprite_get_animation_ids
+        sprite_get_animation_id
+        sprite_get_position
+        sprite_get_rotation
+        sprite_get_z_index
+        sprite_get_current_animation_index
+
+
+animation:
+    id (unsigned int)
+    texture_ids (unsigned ints)
+    keyframes (unsigned floats)
+    texture_id (unsigned int)
+    keyframe (unsigned int)
+    current_index (unsigned int)
+        
+
+    functions:
+        animation_init
+        animation_clear
+        animation_destroy
+
+
+        animation_advance
+
+
+        animation_get_id
+        animation_get_texture_id
+        animation_get_texture_ids
+        animation_get_keyframe
+        animation_get_keyframes
+        animation_get_current_index
+
+
+        animation_set_id
+        animation_set_texture_id
+        animation_set_texture_ids
+        animation_set_keyframe
+        animation_set_keyframes
+        animation_set_current_index
