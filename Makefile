@@ -1,40 +1,32 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -I./include
-LDFLAGS = -lgdi32 -lopengl32
+CFLAGS = -municode -I$(INCLUDE)
 
-SRC_DIR = src
-ENGINE_DIR = $(SRC_DIR)/engine
-GRAPHICS_DIR = $(SRC_DIR)/graphics
-INPUT_DIR = $(SRC_DIR)/input
-MATH_DIR = $(SRC_DIR)/gmath
-PLATFORM_DIR = $(SRC_DIR)/platform
-BUILD_DIR = build
-
-SRC = \
-    $(SRC_DIR)/game.c \
-    $(ENGINE_DIR)/engine.c \
-    $(GRAPHICS_DIR)/animation.c \
-	$(GRAPHICS_DIR)/camera.c \
-    $(GRAPHICS_DIR)/renderer.c \
-    $(GRAPHICS_DIR)/sprite.c \
-    $(INPUT_DIR)/input.c \
-    $(MATH_DIR)/gmath.c \
-    $(PLATFORM_DIR)/win32_window.c
-
-OBJ = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SRC))
+SRC = src
+INCLUDE = include
+BUILD = build
 
 TARGET = main.exe
 
-all: $(TARGET)
+SRCS = $(wildcard $(SRC)/*.c)
+OBJS = $(patsubst $(SRC)/%.c, $(BUILD)/%.o, $(SRCS))
 
-$(TARGET): $(OBJ)
-	@mkdir -p $(BUILD_DIR)
-	$(CC) -o $@ $^ $(LDFLAGS)
+VPATH = $(SRC) $(INCLUDE)
 
-$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
-	@mkdir -p $(dir $@)
+.PHONY: all clean clean-all
+
+all: $(BUILD) $(TARGET)
+
+$(TARGET): $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $^
+
+$(BUILD):
+	@if not exist $(BUILD) mkdir $(BUILD)
+
+$(BUILD)/%.o: $(SRC)/%.c | $(BUILD)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -rf $(BUILD_DIR)
-	rm -f $(TARGET)
+	@if exist $(BUILD) rmdir /s /q $(BUILD)
+	@if exist $(TARGET) del /q $(TARGET)
+
+clean-all: clean all
