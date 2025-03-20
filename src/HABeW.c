@@ -27,9 +27,15 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 
         case WM_CLOSE:
             if (window) {
-                HABeW_stop(window);
+                HABeW_free(window);
             }
-            break;
+            return 0;
+
+        case SW_HIDE:
+            if (window) {
+                HABeW_hide(window);
+            }
+            return 0;
 
         default:
             return DefWindowProc(hwnd, uMsg, wParam, lParam);
@@ -158,7 +164,7 @@ int HABeW_free(HABeW_Window* window) {
     if (!window) {
         return 1;
     }
-    
+
     if (!window->flags.is_stopped) {
         HABeW_stop(window);
     }
@@ -209,8 +215,17 @@ int HABeW_hide(HABeW_Window* window) {
     }
 
     ShowWindow(window->properties.hwnd, SW_HIDE);
-    window->flags.is_visible = 0;
 
+    HWND nextWindow = GetNextWindow(window->properties.hwnd, GW_HWNDNEXT);
+    if (!nextWindow) {
+        nextWindow = GetNextWindow(window->properties.hwnd, GW_HWNDPREV);
+    }
+
+    if (nextWindow) {
+        SetForegroundWindow(nextWindow);
+    }
+
+    window->flags.is_visible = 0;
     return 0;
 }
 
@@ -225,8 +240,6 @@ int HABeW_stop(HABeW_Window* window) {
     }
 
     SetEvent(window->stop_event);
-    
-    HABeW_free(window);
 
     return 0;
 }
